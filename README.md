@@ -41,6 +41,10 @@ Kudexgram uses the short command name `kdx`.
 ```bash
 kdx --help
 kdx new mybot
+cd mybot
+python -m pip install -e ".[dev]"
+copy .env.example .env
+python bot.py
 kdx dev
 ```
 
@@ -70,7 +74,7 @@ uv run kdx --help
 - Runtime boundary for polling, webhook, replay, and tests.
 - Minimal production-shaped state engine for conversations.
 - Testing DSL for feeding fake updates and asserting outgoing API calls.
-- CLI entrypoint `kdx` for project scaffolding and local development.
+- CLI entrypoint `kdx` for full project scaffolding and local development.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the current v0.1 architecture direction.
 

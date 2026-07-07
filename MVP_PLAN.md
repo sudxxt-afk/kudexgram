@@ -27,6 +27,8 @@ short CLI command `kdx`.
 5. State: versioned in-memory state store and conversation-oriented example.
 6. Testing: fake Telegram client, update feed helpers, outgoing message assertions.
 7. CLI: `kdx new <name>`, `kdx dev`, and `kdx --help`.
+   - `kdx new` generates `pyproject.toml`, `README.md`, `.env.example`, `.gitignore`,
+     `bot.py`, and `tests/test_bot.py`.
 8. Docs/examples: echo bot, conversation bot, AI assistant stub.
 9. Architecture docs: keep `ARCHITECTURE.md` updated with stable extension points before API freeze.
 
