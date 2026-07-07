@@ -16,6 +16,7 @@ short CLI command `kdx`.
 - `UpdateSource` / `PollingRunner`: runtime boundary for polling, webhook, queue, replay, and tests.
 - `TelegramClient`: low-level async API client with `call(...)`, `send_message(...)`, `get_updates(...)`.
 - `MemoryStateStore`: development state adapter behind a production-shaped `StateStore` contract.
+- `BotScenario`: testing DSL for feeding message updates and asserting replies/API calls.
 - `kdx`: console command for project scaffolding and local dev.
 
 ## Implementation Milestones
@@ -25,7 +26,7 @@ short CLI command `kdx`.
 3. Client runtime: persistent `TelegramClient`, polling source, runner, error handling, graceful shutdown.
 4. Routing: command/text matching, compiled handler dispatch, context proxy, returned text rendering.
 5. State: versioned in-memory state store and conversation-oriented example.
-6. Testing: fake Telegram client, update feed helpers, outgoing message assertions.
+6. Testing: fake Telegram client, `bot.scenario()`, update feed helpers, outgoing message assertions.
 7. CLI: `kdx new <name>`, `kdx dev`, and `kdx --help`.
    - `kdx new` generates `pyproject.toml`, `README.md`, `.env.example`, `.gitignore`,
      `bot.py`, and `tests/test_bot.py`.

@@ -168,42 +168,23 @@ def _test_template() -> str:
 os.environ.setdefault("TELEGRAM_BOT_TOKEN", "test-token")
 
 from bot import bot
-from kudexgram.testing import FakeTelegramClient
-from kudexgram.types import Chat, Message, Update, User
-
-
-def make_update(text: str) -> Update:
-    return Update(
-        update_id=1,
-        message=Message(
-            message_id=1,
-            chat=Chat(id=42, type="private"),
-            text=text,
-            from_=User(id=7, is_bot=False, first_name="Ada", username="ada"),
-        ),
-    )
 
 
 async def test_start_command_replies() -> None:
-    client = FakeTelegramClient()
-    bot.app.client = client
+    scenario = bot.scenario(chat_id=42, user_id=7, first_name="Ada", username="ada")
 
-    handled = await bot.dispatch(make_update("/start"))
+    await scenario.send_message("/start")
 
-    assert handled is True
-    assert client.calls == [
-        ("sendMessage", {"chat_id": 42, "text": "Hey Ada. Kudexgram is alive."})
-    ]
+    scenario.assert_handled()
+    scenario.assert_last_reply("Hey Ada. Kudexgram is alive.")
 
 
 async def test_echo_replies_with_message_text() -> None:
-    client = FakeTelegramClient()
-    bot.app.client = client
+    scenario = bot.scenario(chat_id=42)
 
-    handled = await bot.dispatch(make_update("ping"))
+    await scenario.send_message("ping")
 
-    assert handled is True
-    assert client.calls == [("sendMessage", {"chat_id": 42, "text": "You said: ping"})]
+    scenario.assert_last_reply("You said: ping")
 """
 
 

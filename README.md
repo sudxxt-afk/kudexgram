@@ -73,8 +73,22 @@ uv run kdx --help
 - Context API with explicit `ctx: Context` injection and `ctx.reply(...)` sugar.
 - Runtime boundary for polling, webhook, replay, and tests.
 - Minimal production-shaped state engine for conversations.
-- Testing DSL for feeding fake updates and asserting outgoing API calls.
+- Testing DSL for conversation-style tests with `bot.scenario()`.
 - CLI entrypoint `kdx` for full project scaffolding and local development.
+
+## Testing DSL
+
+Kudexgram tests can read like a Telegram chat:
+
+```python
+scenario = bot.scenario(chat_id=42, user_id=7, first_name="Ada")
+
+await scenario.send_message("/start")
+
+scenario.assert_handled()
+scenario.assert_last_reply("Hey Ada. Kudexgram is alive.")
+scenario.assert_api_called("sendMessage")
+```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the current v0.1 architecture direction.
 

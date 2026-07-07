@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import os
+from typing import TYPE_CHECKING
 
 from kudexgram.app import Application, Plugin
 from kudexgram.client import TelegramClient
 from kudexgram.router import Router
 from kudexgram.runtime import PollingRunner, PollingUpdateSource
 from kudexgram.types import Update
+
+if TYPE_CHECKING:
+    from kudexgram.testing import BotScenario
 
 
 class Bot:
@@ -41,6 +45,24 @@ class Bot:
 
     async def dispatch(self, update: Update) -> bool:
         return await self.app.dispatch(update)
+
+    def scenario(
+        self,
+        *,
+        chat_id: int = 1,
+        user_id: int = 1,
+        first_name: str = "Test",
+        username: str | None = "test_user",
+    ) -> BotScenario:
+        from kudexgram.testing import BotScenario
+
+        return BotScenario(
+            self,
+            chat_id=chat_id,
+            user_id=user_id,
+            first_name=first_name,
+            username=username,
+        )
 
     async def aclose(self) -> None:
         await self.app.aclose()
