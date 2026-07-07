@@ -13,6 +13,15 @@ Telegram bots are becoming real applications: they need reliable state, clean
 developer experience, testable flows, Mini Apps, payments, AI responses, tracing,
 and deployment patterns. Kudexgram aims to make that feel boringly good.
 
+## Manifesto
+
+Kudexgram makes Telegram bots feel small when they are small, and stay
+maintainable when they grow.
+
+Write handlers as product logic. Return replies directly. Test conversations like
+conversations. Scale into explicit context, state, middleware, plugins, and
+production runtimes only when you need them.
+
 ```python
 from kudexgram import Bot, Context, Router
 
