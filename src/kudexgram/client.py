@@ -160,6 +160,55 @@ class TelegramClient:
             payload["text"] = text
         return await self.call("answerCallbackQuery", _normalize_payload(payload))
 
+    async def edit_message_text(
+        self,
+        chat_id: int | str | None = None,
+        message_id: int | None = None,
+        inline_message_id: str | None = None,
+        *,
+        text: str,
+        **params: Any,
+    ) -> Any:
+        payload: dict[str, Any] = {"text": text, **params}
+        if chat_id is not None:
+            payload["chat_id"] = chat_id
+        if message_id is not None:
+            payload["message_id"] = message_id
+        if inline_message_id is not None:
+            payload["inline_message_id"] = inline_message_id
+        return await self.call("editMessageText", payload)
+
+    async def edit_message_reply_markup(
+        self,
+        chat_id: int | str | None = None,
+        message_id: int | None = None,
+        inline_message_id: str | None = None,
+        *,
+        reply_markup: Any | None = None,
+        **params: Any,
+    ) -> Any:
+        payload: dict[str, Any] = {**params}
+        if chat_id is not None:
+            payload["chat_id"] = chat_id
+        if message_id is not None:
+            payload["message_id"] = message_id
+        if inline_message_id is not None:
+            payload["inline_message_id"] = inline_message_id
+        if reply_markup is not None:
+            payload["reply_markup"] = reply_markup
+        return await self.call("editMessageReplyMarkup", payload)
+
+    async def delete_message(self, chat_id: int | str, message_id: int) -> Any:
+        return await self.call("deleteMessage", {"chat_id": chat_id, "message_id": message_id})
+
+    async def send_photo(self, chat_id: int | str, photo: str, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "photo": photo, **params}
+        return await self.call("sendPhoto", payload)
+
+    async def send_document(self, chat_id: int | str, document: str, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "document": document, **params}
+        return await self.call("sendDocument", payload)
+
     @property
     def http(self) -> httpx.AsyncClient:
         if self._http is None:

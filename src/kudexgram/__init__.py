@@ -8,7 +8,7 @@ from kudexgram.client import (
     TelegramRateLimitError,
 )
 from kudexgram.context import Context, ctx, get_current_context
-from kudexgram.keyboards import InlineKeyboard
+from kudexgram.keyboards import InlineKeyboard, ReplyKeyboard, ReplyKeyboardRemove
 from kudexgram.middleware import Middleware, MiddlewareObject, NextHandler
 from kudexgram.router import Router
 from kudexgram.runtime import PollingRunner, PollingUpdateSource, UpdateSource
@@ -33,6 +33,8 @@ __all__ = [
     "Plugin",
     "PollingRunner",
     "PollingUpdateSource",
+    "ReplyKeyboard",
+    "ReplyKeyboardRemove",
     "Router",
     "StateRecord",
     "StateStore",

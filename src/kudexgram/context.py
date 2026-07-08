@@ -52,6 +52,32 @@ class Context:
             **params,
         )
 
+    @property
+    def message_id(self) -> int | None:
+        if self.message is None:
+            return None
+        return self.message.message_id
+
+    async def edit_text(self, text: str, **params: Any) -> Any:
+        if self.chat_id is None or self.message_id is None:
+            raise RuntimeError("Cannot edit message text without chat_id and message_id")
+        return await self.client.edit_message_text(
+            chat_id=self.chat_id,
+            message_id=self.message_id,
+            text=text,
+            **params,
+        )
+
+    async def delete_message(self) -> Any:
+        if self.chat_id is None or self.message_id is None:
+            raise RuntimeError("Cannot delete message without chat_id and message_id")
+        return await self.client.delete_message(self.chat_id, self.message_id)
+
+    async def reply_photo(self, photo: str, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot reply with photo to an update without a chat")
+        return await self.client.send_photo(self.chat_id, photo, **params)
+
 
 def get_current_context() -> Context:
     return _current_context.get()
