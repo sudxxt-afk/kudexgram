@@ -50,6 +50,14 @@ async def log_chat(ctx: Context, next) -> bool:
     return await next()
 ```
 
+## Installation
+
+Install Kudexgram from PyPI:
+
+```bash
+pip install kudexgram
+```
+
 ## CLI
 
 Kudexgram uses the short command name `kdx`.
