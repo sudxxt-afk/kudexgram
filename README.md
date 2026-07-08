@@ -23,23 +23,21 @@ conversations. Scale into explicit context, state, middleware, plugins, and
 production runtimes only when you need them.
 
 ```python
-from kudexgram import Bot, Context, Router
+from kudexgram import Bot, Context
 
 bot = Bot.from_env()
-router = Router()
 
 
-@router.command("start")
+@bot.command("start")
 async def start(ctx: Context) -> str:
     return "Hey. Kudexgram is alive."
 
 
-@router.text()
+@bot.text()
 async def echo(message: str) -> str:
     return f"You said: {message}"
 
 
-bot.include(router)
 bot.run_polling()
 ```
 
@@ -78,6 +76,7 @@ uv run kdx --help
 
 - Thin `Bot` facade over an application/runtime architecture.
 - Async Telegram Bot API client with a typed core and codegen-ready boundaries.
+- `Bot` decorators for small bots, plus `Router` for modular projects.
 - Router decorators for commands and text messages with compiled handler resolution.
 - Context API with explicit `ctx: Context` injection and `ctx.reply(...)` sugar.
 - Runtime boundary for polling, webhook, replay, and tests.

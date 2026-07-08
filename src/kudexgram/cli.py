@@ -51,14 +51,13 @@ def new(
 
 
 def _bot_template() -> str:
-    return """from kudexgram import Bot, Context, InlineKeyboard, Router
+    return """from kudexgram import Bot, Context, InlineKeyboard
 
 
 bot = Bot.from_env()
-router = Router()
 
 
-@router.command("start")
+@bot.command("start")
 async def start(ctx: Context) -> None:
     user = ctx.message.from_.first_name if ctx.message and ctx.message.from_ else "there"
     await ctx.reply(
@@ -67,18 +66,16 @@ async def start(ctx: Context) -> None:
     )
 
 
-@router.callback("profile")
+@bot.callback("profile")
 async def profile(ctx: Context) -> None:
     await ctx.answer_callback("Opening profile")
     await ctx.reply("Your profile is not set up yet.")
 
 
-@router.text()
+@bot.text()
 async def echo(message: str) -> str:
     return f"You said: {message}"
 
-
-bot.include(router)
 
 if __name__ == "__main__":
     bot.run_polling()

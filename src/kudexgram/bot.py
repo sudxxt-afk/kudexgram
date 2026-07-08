@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import os
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from kudexgram.app import Application, Plugin
 from kudexgram.client import TelegramClient
-from kudexgram.router import Router
+from kudexgram.router import Handler, Router
 from kudexgram.runtime import PollingRunner, PollingUpdateSource
 from kudexgram.types import Update
 
@@ -17,6 +18,8 @@ if TYPE_CHECKING:
 class Bot:
     def __init__(self, token: str, *, client: TelegramClient | None = None) -> None:
         self.app = Application(client=client or TelegramClient(token))
+        self.router = Router()
+        self.include(self.router)
 
     @classmethod
     def from_env(cls, name: str = "TELEGRAM_BOT_TOKEN") -> Bot:
@@ -31,6 +34,15 @@ class Bot:
 
     def include(self, router: Router) -> None:
         self.app.include(router)
+
+    def command(self, name: str) -> Callable[[Handler], Handler]:
+        return self.router.command(name)
+
+    def text(self) -> Callable[[Handler], Handler]:
+        return self.router.text()
+
+    def callback(self, data: str) -> Callable[[Handler], Handler]:
+        return self.router.callback(data)
 
     def install(self, plugin: Plugin) -> None:
         self.app.install(plugin)

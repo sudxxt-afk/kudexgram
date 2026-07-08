@@ -19,8 +19,10 @@ def test_kdx_new_creates_project(tmp_path) -> None:
     assert "kudexgram>=0.0.1" in (project / "pyproject.toml").read_text(encoding="utf-8")
     bot_template = (project / "bot.py").read_text(encoding="utf-8")
     test_template = (project / "tests" / "test_bot.py").read_text(encoding="utf-8")
-    assert "from kudexgram import Bot, Context, InlineKeyboard, Router" in bot_template
-    assert '@router.callback("profile")' in bot_template
+    assert "from kudexgram import Bot, Context, InlineKeyboard" in bot_template
+    assert "@bot.command(\"start\")" in bot_template
+    assert "Router" not in bot_template
+    assert '@bot.callback("profile")' in bot_template
     assert 'await scenario.tap("profile")' in test_template
 
 
