@@ -51,7 +51,7 @@ def new(
 
 
 def _bot_template() -> str:
-    return """from kudexgram import Bot, Context, Router
+    return """from kudexgram import Bot, Context, InlineKeyboard, Router
 
 
 bot = Bot.from_env()
@@ -59,9 +59,18 @@ router = Router()
 
 
 @router.command("start")
-async def start(ctx: Context) -> str:
+async def start(ctx: Context) -> None:
     user = ctx.message.from_.first_name if ctx.message and ctx.message.from_ else "there"
-    return f"Hey {user}. Kudexgram is alive."
+    await ctx.reply(
+        f"Hey {user}. Kudexgram is alive.",
+        reply_markup=InlineKeyboard().button("Profile", callback="profile"),
+    )
+
+
+@router.callback("profile")
+async def profile(ctx: Context) -> None:
+    await ctx.answer_callback("Opening profile")
+    await ctx.reply("Your profile is not set up yet.")
 
 
 @router.text()
@@ -177,6 +186,26 @@ async def test_start_command_replies() -> None:
 
     scenario.assert_handled()
     scenario.assert_last_reply("Hey Ada. Kudexgram is alive.")
+    scenario.assert_api_called(
+        "sendMessage",
+        {
+            "chat_id": 42,
+            "text": "Hey Ada. Kudexgram is alive.",
+            "reply_markup": {
+                "inline_keyboard": [[{"text": "Profile", "callback_data": "profile"}]]
+            },
+        },
+    )
+
+
+async def test_profile_button_answers_callback() -> None:
+    scenario = bot.scenario(chat_id=42)
+
+    await scenario.tap("profile")
+
+    scenario.assert_handled()
+    scenario.assert_callback_answered("Opening profile")
+    scenario.assert_last_reply("Your profile is not set up yet.")
 
 
 async def test_echo_replies_with_message_text() -> None:

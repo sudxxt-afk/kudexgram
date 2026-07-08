@@ -28,11 +28,19 @@ class Message(msgspec.Struct, frozen=True):
     from_: User | None = msgspec.field(default=None, name="from")
 
 
+class CallbackQuery(msgspec.Struct, frozen=True):
+    id: str
+    from_: User = msgspec.field(name="from")
+    message: Message | None = None
+    data: str | None = None
+    chat_instance: str | None = None
+
+
 class Update(msgspec.Struct, frozen=True):
     update_id: int
     message: Message | None = None
+    callback_query: CallbackQuery | None = None
 
 
 def convert_update(value: dict[str, Any]) -> Update:
     return msgspec.convert(value, Update)
-

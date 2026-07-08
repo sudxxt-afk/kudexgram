@@ -1,4 +1,4 @@
-from kudexgram import Bot, Context, Router
+from kudexgram import Bot, Context, InlineKeyboard, Router
 
 
 def make_bot() -> Bot:
@@ -6,9 +6,17 @@ def make_bot() -> Bot:
     router = Router()
 
     @router.command("start")
-    async def start(ctx: Context) -> str:
+    async def start(ctx: Context) -> None:
         user = ctx.message.from_.first_name if ctx.message and ctx.message.from_ else "there"
-        return f"Hey {user}"
+        await ctx.reply(
+            f"Hey {user}",
+            reply_markup=InlineKeyboard().button("Profile", callback="profile"),
+        )
+
+    @router.callback("profile")
+    async def profile(ctx: Context) -> None:
+        await ctx.answer_callback("Opening profile")
+        await ctx.reply("Profile tapped")
 
     @router.text()
     async def echo(message: str) -> str:
@@ -27,6 +35,16 @@ async def test_scenario_sends_message_and_asserts_reply() -> None:
     scenario.assert_handled()
     scenario.assert_replied("Hey Ada")
     scenario.assert_last_reply("Hey Ada")
+    scenario.assert_api_called(
+        "sendMessage",
+        {
+            "chat_id": 42,
+            "text": "Hey Ada",
+            "reply_markup": {
+                "inline_keyboard": [[{"text": "Profile", "callback_data": "profile"}]]
+            },
+        },
+    )
 
 
 async def test_scenario_alias_send_and_api_assertion() -> None:
@@ -37,3 +55,14 @@ async def test_scenario_alias_send_and_api_assertion() -> None:
 
     scenario.assert_last_reply("Echo: ping")
     scenario.assert_api_called("sendMessage", {"chat_id": 42, "text": "Echo: ping"})
+
+
+async def test_scenario_tap_dispatches_callback_query() -> None:
+    bot = make_bot()
+    scenario = bot.scenario(chat_id=42)
+
+    await scenario.tap("profile")
+
+    scenario.assert_handled()
+    scenario.assert_callback_answered("Opening profile")
+    scenario.assert_last_reply("Profile tapped")

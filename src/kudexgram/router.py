@@ -8,7 +8,7 @@ from typing import Any
 
 from kudexgram.client import TelegramClient
 from kudexgram.context import Context, _current_context
-from kudexgram.types import Message, Update
+from kudexgram.types import CallbackQuery, Message, Update
 
 Handler = Callable[..., Awaitable[Any]]
 Filter = Callable[[Update], bool]
@@ -53,6 +53,19 @@ class Router:
 
         return decorator
 
+    def callback(self, data: str) -> Callable[[Handler], Handler]:
+        def decorator(handler: Handler) -> Handler:
+            self.routes.append(
+                Route(
+                    filter=lambda update: _has_callback_data(update, data),
+                    handler=handler,
+                    resolver=HandlerResolver.compile(handler),
+                )
+            )
+            return handler
+
+        return decorator
+
     async def dispatch(self, update: Update, client: TelegramClient) -> bool:
         for route in self.routes:
             if not route.filter(update):
@@ -75,6 +88,8 @@ class ArgumentSource(Enum):
     UPDATE = "update"
     MESSAGE = "message"
     MESSAGE_TEXT = "message_text"
+    CALLBACK_QUERY = "callback_query"
+    CALLBACK_DATA = "callback_data"
 
 
 @dataclass(frozen=True)
@@ -108,14 +123,22 @@ def _resolve_argument(parameter: inspect.Parameter) -> ArgumentSource:
         return ArgumentSource.UPDATE
     if annotation is Message:
         return ArgumentSource.MESSAGE
+    if annotation is CallbackQuery:
+        return ArgumentSource.CALLBACK_QUERY
     if annotation is str and parameter.name == "message":
         return ArgumentSource.MESSAGE_TEXT
+    if annotation is str and parameter.name == "callback_data":
+        return ArgumentSource.CALLBACK_DATA
     if parameter.name == "ctx":
         return ArgumentSource.CONTEXT
     if parameter.name == "update":
         return ArgumentSource.UPDATE
     if parameter.name == "message":
         return ArgumentSource.MESSAGE_TEXT
+    if parameter.name == "callback_query":
+        return ArgumentSource.CALLBACK_QUERY
+    if parameter.name == "callback_data":
+        return ArgumentSource.CALLBACK_DATA
     return ArgumentSource.CONTEXT
 
 
@@ -128,6 +151,10 @@ def _read_argument(source: ArgumentSource, context: Context) -> Any:
         return context.message
     if source is ArgumentSource.MESSAGE_TEXT:
         return context.message.text if context.message else None
+    if source is ArgumentSource.CALLBACK_QUERY:
+        return context.callback_query
+    if source is ArgumentSource.CALLBACK_DATA:
+        return context.callback_data
     raise RuntimeError(f"Unknown handler argument source: {source}")
 
 
@@ -140,3 +167,7 @@ def _is_command(update: Update, command_name: str) -> bool:
         return False
     head = update.message.text.split(maxsplit=1)[0]
     return head == f"/{command_name}" or head.startswith(f"/{command_name}@")
+
+
+def _has_callback_data(update: Update, data: str) -> bool:
+    return bool(update.callback_query and update.callback_query.data == data)

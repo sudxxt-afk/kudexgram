@@ -31,7 +31,10 @@ class TelegramClient:
         return f"{self.base_url}/bot{self.token}"
 
     async def call(self, method: str, payload: dict[str, Any] | None = None) -> Any:
-        response = await self.http.post(f"{self.api_url}/{method}", json=payload or {})
+        response = await self.http.post(
+            f"{self.api_url}/{method}",
+            json=_normalize_payload(payload or {}),
+        )
         response.raise_for_status()
         data = response.json()
 
@@ -58,7 +61,20 @@ class TelegramClient:
         return list(result or [])
 
     async def send_message(self, chat_id: int | str, text: str, **params: Any) -> Any:
-        return await self.call("sendMessage", {"chat_id": chat_id, "text": text, **params})
+        payload = _normalize_payload({"chat_id": chat_id, "text": text, **params})
+        return await self.call("sendMessage", payload)
+
+    async def answer_callback_query(
+        self,
+        callback_query_id: str,
+        *,
+        text: str | None = None,
+        **params: Any,
+    ) -> Any:
+        payload: dict[str, Any] = {"callback_query_id": callback_query_id, **params}
+        if text is not None:
+            payload["text"] = text
+        return await self.call("answerCallbackQuery", _normalize_payload(payload))
 
     @property
     def http(self) -> httpx.AsyncClient:
@@ -78,3 +94,18 @@ class TelegramClient:
 
     async def __aexit__(self, *exc: object) -> None:
         await self.aclose()
+
+
+def _normalize_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    return {key: _normalize_value(value) for key, value in payload.items()}
+
+
+def _normalize_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _normalize_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_normalize_value(item) for item in value]
+    to_dict = getattr(value, "to_dict", None)
+    if callable(to_dict):
+        return _normalize_value(to_dict())
+    return value

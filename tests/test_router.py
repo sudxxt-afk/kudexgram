@@ -1,4 +1,6 @@
-from kudexgram import Bot, Context, Router, Update, ctx
+import pytest
+
+from kudexgram import Bot, CallbackQuery, Context, InlineKeyboard, Router, Update, User, ctx
 from kudexgram.testing import FakeTelegramClient
 from kudexgram.types import Chat, Message
 
@@ -10,6 +12,26 @@ def make_update(text: str) -> Update:
             message_id=1,
             chat=Chat(id=42, type="private"),
             text=text,
+        ),
+    )
+
+
+def make_callback_update(data: str, *, with_message: bool = True) -> Update:
+    return Update(
+        update_id=2,
+        callback_query=CallbackQuery(
+            id="cq-1",
+            from_=User(id=7, is_bot=False, first_name="Ada", username="ada"),
+            message=(
+                Message(
+                    message_id=9,
+                    chat=Chat(id=42, type="private"),
+                    text="Choose",
+                )
+                if with_message
+                else None
+            ),
+            data=data,
         ),
     )
 
@@ -82,3 +104,71 @@ async def test_handler_can_receive_update() -> None:
 
     assert handled is True
     assert client.calls == [("sendMessage", {"chat_id": 42, "text": "typed update"})]
+
+
+async def test_reply_markup_is_serialized_for_send_message() -> None:
+    client = FakeTelegramClient()
+    bot = Bot("token", client=client)
+    router = Router()
+
+    @router.command("start")
+    async def start() -> None:
+        await ctx.reply(
+            "Choose",
+            reply_markup=InlineKeyboard().button("Profile", callback="profile"),
+        )
+
+    bot.include(router)
+
+    handled = await bot.dispatch(make_update("/start"))
+
+    assert handled is True
+    assert client.calls == [
+        (
+            "sendMessage",
+            {
+                "chat_id": 42,
+                "text": "Choose",
+                "reply_markup": {
+                    "inline_keyboard": [[{"text": "Profile", "callback_data": "profile"}]]
+                },
+            },
+        )
+    ]
+
+
+async def test_callback_handler_answers_and_replies_in_callback_chat() -> None:
+    client = FakeTelegramClient()
+    bot = Bot("token", client=client)
+    router = Router()
+
+    @router.callback("profile")
+    async def profile(context: Context) -> str:
+        assert context.callback_data == "profile"
+        await context.answer_callback("Opening profile")
+        return "Profile opened"
+
+    bot.include(router)
+
+    handled = await bot.dispatch(make_callback_update("profile"))
+
+    assert handled is True
+    assert client.calls == [
+        ("answerCallbackQuery", {"callback_query_id": "cq-1", "text": "Opening profile"}),
+        ("sendMessage", {"chat_id": 42, "text": "Profile opened"}),
+    ]
+
+
+async def test_callback_returned_text_requires_callback_message_chat() -> None:
+    client = FakeTelegramClient()
+    bot = Bot("token", client=client)
+    router = Router()
+
+    @router.callback("orphan")
+    async def orphan() -> str:
+        return "cannot send"
+
+    bot.include(router)
+
+    with pytest.raises(RuntimeError, match="Cannot reply to an update without a chat"):
+        await bot.dispatch(make_callback_update("orphan", with_message=False))

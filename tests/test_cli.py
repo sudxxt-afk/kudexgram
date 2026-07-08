@@ -17,9 +17,11 @@ def test_kdx_new_creates_project(tmp_path) -> None:
     assert (project / ".gitignore").exists()
     assert (project / "tests" / "test_bot.py").exists()
     assert "kudexgram>=0.0.1" in (project / "pyproject.toml").read_text(encoding="utf-8")
-    assert "from kudexgram import Bot, Context, Router" in (
-        project / "bot.py"
-    ).read_text(encoding="utf-8")
+    bot_template = (project / "bot.py").read_text(encoding="utf-8")
+    test_template = (project / "tests" / "test_bot.py").read_text(encoding="utf-8")
+    assert "from kudexgram import Bot, Context, InlineKeyboard, Router" in bot_template
+    assert '@router.callback("profile")' in bot_template
+    assert 'await scenario.tap("profile")' in test_template
 
 
 def test_kdx_new_refuses_non_empty_directory_without_force(tmp_path) -> None:

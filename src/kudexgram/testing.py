@@ -5,7 +5,7 @@ from typing import Any
 
 from kudexgram.bot import Bot
 from kudexgram.client import TelegramClient
-from kudexgram.types import Chat, Message, Update, User
+from kudexgram.types import CallbackQuery, Chat, Message, Update, User
 
 
 class FakeTelegramClient(TelegramClient):
@@ -24,6 +24,9 @@ class FakeTelegramClient(TelegramClient):
 
     def sent_messages(self) -> list[dict[str, Any]]:
         return [payload for method, payload in self.calls if method == "sendMessage"]
+
+    def answered_callbacks(self) -> list[dict[str, Any]]:
+        return [payload for method, payload in self.calls if method == "answerCallbackQuery"]
 
 
 @dataclass(frozen=True)
@@ -68,6 +71,12 @@ class BotScenario:
     async def send(self, text: str) -> bool:
         return await self.send_message(text)
 
+    async def tap(self, callback_data: str) -> bool:
+        update = self.make_callback_update(callback_data)
+        handled = await self.bot.dispatch(update)
+        self.handled.append(handled)
+        return handled
+
     def make_message_update(self, text: str) -> Update:
         update = Update(
             update_id=self._next_update_id,
@@ -81,6 +90,30 @@ class BotScenario:
                     first_name=self.user.first_name,
                     username=self.user.username,
                 ),
+            ),
+        )
+        self._next_update_id += 1
+        self._next_message_id += 1
+        return update
+
+    def make_callback_update(self, callback_data: str) -> Update:
+        callback_message = Message(
+            message_id=self._next_message_id,
+            chat=Chat(id=self.chat.id, type=self.chat.type),
+            text=self._last_sent_message_text(),
+        )
+        update = Update(
+            update_id=self._next_update_id,
+            callback_query=CallbackQuery(
+                id=f"cq-{self._next_update_id}",
+                from_=User(
+                    id=self.user.id,
+                    is_bot=self.user.is_bot,
+                    first_name=self.user.first_name,
+                    username=self.user.username,
+                ),
+                message=callback_message,
+                data=callback_data,
             ),
         )
         self._next_update_id += 1
@@ -121,3 +154,20 @@ class BotScenario:
     def assert_handled(self) -> None:
         if not self.handled or not self.handled[-1]:
             raise AssertionError(f"Expected last update to be handled, got {self.handled!r}")
+
+    def assert_callback_answered(self, text: str | None = None) -> None:
+        answers = self.client.answered_callbacks()
+        if not answers:
+            raise AssertionError("Expected bot to answer a callback query, but none were sent")
+        if text is None:
+            return
+        actual = [answer.get("text") for answer in answers]
+        if text not in actual:
+            raise AssertionError(f"Expected callback answer {text!r}, got {actual!r}")
+
+    def _last_sent_message_text(self) -> str | None:
+        sent_messages = self.client.sent_messages()
+        if not sent_messages:
+            return None
+        value = sent_messages[-1].get("text")
+        return str(value) if value is not None else None
