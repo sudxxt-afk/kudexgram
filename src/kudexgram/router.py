@@ -32,7 +32,7 @@ class Router:
                 Route(
                     filter=lambda update: _is_command(update, command_name),
                     handler=handler,
-                    resolver=HandlerResolver.compile(handler),
+                    resolver=HandlerResolver.compile(handler, route_type="message"),
                 )
             )
             return handler
@@ -45,7 +45,7 @@ class Router:
                 Route(
                     filter=_has_text,
                     handler=handler,
-                    resolver=HandlerResolver.compile(handler),
+                    resolver=HandlerResolver.compile(handler, route_type="message"),
                 )
             )
             return handler
@@ -58,7 +58,7 @@ class Router:
                 Route(
                     filter=lambda update: _has_callback_data(update, data),
                     handler=handler,
-                    resolver=HandlerResolver.compile(handler),
+                    resolver=HandlerResolver.compile(handler, route_type="callback"),
                 )
             )
             return handler
@@ -92,10 +92,10 @@ class HandlerResolver:
     arguments: tuple[ArgumentSource, ...]
 
     @classmethod
-    def compile(cls, handler: Handler) -> HandlerResolver:
+    def compile(cls, handler: Handler, route_type: str = "message") -> HandlerResolver:
         signature = inspect.signature(handler)
         arguments = tuple(
-            _resolve_argument(parameter) for parameter in signature.parameters.values()
+            _resolve_argument(parameter, route_type) for parameter in signature.parameters.values()
         )
         return cls(handler=handler, arguments=arguments)
 
@@ -109,37 +109,37 @@ async def _render_result(context: Context, result: Any) -> None:
         await context.reply(result)
 
 
-def _resolve_argument(parameter: inspect.Parameter) -> ArgumentSource:
+def _resolve_argument(parameter: inspect.Parameter, route_type: str) -> ArgumentSource:
     annotation = parameter.annotation
     name = parameter.name
-    if annotation is Context:
+    
+    if annotation is Context or name in {"ctx", "context"}:
         return ArgumentSource.CONTEXT
-    if annotation is Update:
+    if annotation is Update or name == "update":
         return ArgumentSource.UPDATE
-    if annotation is Message:
+    if annotation is Message or name == "message_obj":
         return ArgumentSource.MESSAGE
-    if annotation is CallbackQuery:
+    if annotation is CallbackQuery or name == "callback_query":
         return ArgumentSource.CALLBACK_QUERY
-    if annotation is str and name == "message":
-        return ArgumentSource.MESSAGE_TEXT
-    if annotation is str and name == "callback_data":
-        return ArgumentSource.CALLBACK_DATA
-    if name in {"ctx", "context"}:
-        return ArgumentSource.CONTEXT
-    if name == "update":
-        return ArgumentSource.UPDATE
-    if name == "message":
-        return ArgumentSource.MESSAGE_TEXT
-    if name == "callback_query":
-        return ArgumentSource.CALLBACK_QUERY
+        
+    if route_type == "callback":
+        if annotation is str or name in {"callback_data", "data", "payload"}:
+            return ArgumentSource.CALLBACK_DATA
+    else:
+        if annotation is str or name in {"message", "text", "msg", "content"}:
+            return ArgumentSource.MESSAGE_TEXT
+
     if name == "callback_data":
         return ArgumentSource.CALLBACK_DATA
+    if name == "message":
+        return ArgumentSource.MESSAGE_TEXT
+
     annotation_hint = ""
     if annotation is not inspect.Signature.empty:
         annotation_hint = f" with annotation {annotation!r}"
     raise TypeError(
-        f"Unsupported handler parameter {name!r}{annotation_hint}. "
-        "Use ctx: Context, update: Update, message: str, "
+        f"Unsupported handler parameter {name!r}{annotation_hint} in {route_type} route. "
+        "Use ctx: Context, update: Update, message/text: str, "
         "callback_query: CallbackQuery, or callback_data: str."
     )
 

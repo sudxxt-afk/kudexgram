@@ -9,6 +9,10 @@ from kudexgram.types import CallbackQuery, Message, Update
 _current_context: ContextVar[Context] = ContextVar("kudexgram_current_context")
 
 
+class KudexgramContextError(RuntimeError):
+    pass
+
+
 class Context:
     def __init__(self, *, update: Update, client: TelegramClient) -> None:
         self.update = update
@@ -133,12 +137,19 @@ class Context:
             raise RuntimeError("Cannot reply with animation to an update without a chat")
         return await self.client.send_animation(self.chat_id, animation, **params)
 
-    async def download_file(self, file_path: str) -> bytes:
-        return await self.client.download_file(file_path)
+    async def download_file(self, file_path: str, destination: str | Path | None = None) -> bytes | None:
+        return await self.client.download_file(file_path, destination)
 
 
 def get_current_context() -> Context:
-    return _current_context.get()
+    try:
+        return _current_context.get()
+    except LookupError as error:
+        raise KudexgramContextError(
+            "Working outside of request context. This typically means you are "
+            "attempting to access the global 'ctx' proxy outside an active handler "
+            "or inside an asynchronous task where the context was not propagated."
+        ) from error
 
 
 class ContextProxy:

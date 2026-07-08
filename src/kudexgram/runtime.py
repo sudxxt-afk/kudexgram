@@ -48,8 +48,14 @@ class PollingRunner:
     async def run_once(self) -> int:
         updates = await self.source.fetch()
         for update in updates:
-            await self.app.dispatch(update)
-            await self.source.commit(update)
+            try:
+                await self.app.dispatch(update)
+            except Exception:
+                import sys
+                import traceback
+                traceback.print_exc(file=sys.stderr)
+            finally:
+                await self.source.commit(update)
         return len(updates)
 
     async def run_forever(self) -> None:

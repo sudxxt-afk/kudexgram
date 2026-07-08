@@ -7,7 +7,7 @@ from kudexgram.client import (
     TelegramNetworkError,
     TelegramRateLimitError,
 )
-from kudexgram.context import Context, ctx, get_current_context
+from kudexgram.context import Context, KudexgramContextError, ctx, get_current_context
 from kudexgram.keyboards import InlineKeyboard, ReplyKeyboard, ReplyKeyboardRemove
 from kudexgram.middleware import Middleware, MiddlewareObject, NextHandler
 from kudexgram.router import Router
@@ -23,6 +23,7 @@ __all__ = [
     "CallbackQuery",
     "Chat",
     "Context",
+    "KudexgramContextError",
     "FakeTelegramClient",
     "InlineKeyboard",
     "MemoryStateStore",

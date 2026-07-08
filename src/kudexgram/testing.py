@@ -23,8 +23,12 @@ class FakeTelegramClient(TelegramClient):
             return updates
         return {"ok": True}
 
-    async def download_file(self, file_path: str) -> bytes:
+    async def download_file(self, file_path: str, destination: str | Path | None = None) -> bytes | None:
         self.calls.append(("downloadFile", {"file_path": file_path}))
+        if destination is not None:
+            with open(destination, "wb") as f:
+                f.write(b"file_content")
+            return None
         return b"file_content"
 
     def sent_messages(self) -> list[dict[str, Any]]:

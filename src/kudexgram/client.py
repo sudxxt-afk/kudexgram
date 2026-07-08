@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import io
+import json
+import os
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -111,7 +114,11 @@ class TelegramClient:
         raise RuntimeError("unreachable Telegram retry state")
 
     async def _call_once(self, method: str, payload: dict[str, Any]) -> Any:
-        response = await self.http.post(f"{self.api_url}/{method}", json=payload)
+        form_data, files = _prepare_multipart(payload)
+        if files:
+            response = await self.http.post(f"{self.api_url}/{method}", data=form_data, files=files)
+        else:
+            response = await self.http.post(f"{self.api_url}/{method}", json=payload)
         data = _response_json(response)
 
         if response.status_code >= 400 and data is None:
@@ -328,14 +335,25 @@ class TelegramClient:
         payload = {"chat_id": chat_id, "animation": animation, **params}
         return await self.call("sendAnimation", payload)
 
-    async def download_file(self, file_path: str) -> bytes:
+    async def download_file(self, file_path: str, destination: str | Path | None = None) -> bytes | None:
         url = f"{self.base_url}/file/bot{self.token}/{file_path}"
         for attempt in range(self.retry_attempts + 1):
             try:
-                response = await self.http.get(url)
-                if response.status_code >= 400:
-                    raise TelegramHTTPError("downloadFile", response.status_code, response.text)
-                return response.content
+                async with self.http.stream("GET", url) as response:
+                    if response.status_code >= 400:
+                        err_body = await response.aread()
+                        raise TelegramHTTPError("downloadFile", response.status_code, err_body.decode(errors="ignore"))
+                    
+                    if destination is not None:
+                        with open(destination, "wb") as f:
+                            async for chunk in response.aiter_bytes(chunk_size=65536):
+                                f.write(chunk)
+                        return None
+                    else:
+                        chunks = []
+                        async for chunk in response.aiter_bytes(chunk_size=65536):
+                            chunks.append(chunk)
+                        return b"".join(chunks)
             except TelegramHTTPError as error:
                 if attempt >= self.retry_attempts or not _is_retryable_status(error.status_code):
                     raise
@@ -415,3 +433,20 @@ def _telegram_error(method: str, data: dict[str, Any]) -> TelegramAPIError:
 
 def _is_retryable_status(status_code: int) -> bool:
     return status_code == 429 or 500 <= status_code <= 599
+
+
+def _prepare_multipart(payload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    form_data = {}
+    files = {}
+    for key, value in payload.items():
+        if isinstance(value, (io.IOBase, bytes)) or hasattr(value, "read"):
+            if isinstance(value, bytes):
+                files[key] = ("file", value)
+            else:
+                filename = getattr(value, "name", "file")
+                files[key] = (os.path.basename(str(filename)), value)
+        elif isinstance(value, (dict, list)):
+            form_data[key] = json.dumps(value)
+        elif value is not None:
+            form_data[key] = str(value)
+    return form_data, files
