@@ -71,6 +71,39 @@ async def test_client_api_coverage() -> None:
     await client.answer_pre_checkout_query(pre_checkout_query_id="pq-123", ok=True, error_message="error")
     assert client.calls[-1] == ("answerPreCheckoutQuery", {"pre_checkout_query_id": "pq-123", "ok": True, "error_message": "error"})
 
+    await client.set_webhook(url="https://example.com/webhook", max_connections=40)
+    assert client.calls[-1] == ("setWebhook", {"url": "https://example.com/webhook", "max_connections": 40})
+
+    await client.delete_webhook(drop_pending_updates=True)
+    assert client.calls[-1] == ("deleteWebhook", {"drop_pending_updates": True})
+
+    await client.get_webhook_info()
+    assert client.calls[-1] == ("getWebhookInfo", {})
+
+    await client.ban_chat_member(chat_id=42, user_id=99)
+    assert client.calls[-1] == ("banChatMember", {"chat_id": 42, "user_id": 99})
+
+    await client.unban_chat_member(chat_id=42, user_id=99)
+    assert client.calls[-1] == ("unbanChatMember", {"chat_id": 42, "user_id": 99})
+
+    await client.restrict_chat_member(chat_id=42, user_id=99, permissions={})
+    assert client.calls[-1] == ("restrictChatMember", {"chat_id": 42, "user_id": 99, "permissions": {}})
+
+    await client.get_chat(chat_id=42)
+    assert client.calls[-1] == ("getChat", {"chat_id": 42})
+
+    await client.get_chat_member(chat_id=42, user_id=99)
+    assert client.calls[-1] == ("getChatMember", {"chat_id": 42, "user_id": 99})
+
+    await client.send_location(chat_id=42, latitude=55.75, longitude=37.61)
+    assert client.calls[-1] == ("sendLocation", {"chat_id": 42, "latitude": 55.75, "longitude": 37.61})
+
+    await client.send_poll(chat_id=42, question="Q?", options=["A", "B"])
+    assert client.calls[-1] == ("sendPoll", {"chat_id": 42, "question": "Q?", "options": ["A", "B"]})
+
+    await client.stop_poll(chat_id=42, message_id=10)
+    assert client.calls[-1] == ("stopPoll", {"chat_id": 42, "message_id": 10})
+
 
 @pytest.mark.asyncio
 async def test_context_helpers_coverage() -> None:
@@ -88,6 +121,10 @@ async def test_context_helpers_coverage() -> None:
         await ctx.reply_audio("audio_id")
         await ctx.reply_video("video_id")
         await ctx.reply_voice("voice_id")
+        await ctx.reply_location(55.75, 37.61)
+        await ctx.reply_poll("Q?", ["A", "B"])
+        await ctx.ban_member(99)
+        await ctx.unban_member(99)
 
     update = Update(
         update_id=1,
@@ -110,3 +147,7 @@ async def test_context_helpers_coverage() -> None:
     assert ("sendAudio", {"chat_id": 42, "audio": "audio_id"}) in calls
     assert ("sendVideo", {"chat_id": 42, "video": "video_id"}) in calls
     assert ("sendVoice", {"chat_id": 42, "voice": "voice_id"}) in calls
+    assert ("sendLocation", {"chat_id": 42, "latitude": 55.75, "longitude": 37.61}) in calls
+    assert ("sendPoll", {"chat_id": 42, "question": "Q?", "options": ["A", "B"]}) in calls
+    assert ("banChatMember", {"chat_id": 42, "user_id": 99}) in calls
+    assert ("unbanChatMember", {"chat_id": 42, "user_id": 99}) in calls

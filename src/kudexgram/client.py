@@ -240,6 +240,61 @@ class TelegramClient:
             payload["error_message"] = error_message
         return await self.call("answerPreCheckoutQuery", payload)
 
+    async def set_webhook(self, url: str, **params: Any) -> Any:
+        payload = {"url": url, **params}
+        return await self.call("setWebhook", payload)
+
+    async def delete_webhook(self, drop_pending_updates: bool | None = None, **params: Any) -> Any:
+        payload = {**params}
+        if drop_pending_updates is not None:
+            payload["drop_pending_updates"] = drop_pending_updates
+        return await self.call("deleteWebhook", payload)
+
+    async def get_webhook_info(self) -> Any:
+        return await self.call("getWebhookInfo")
+
+    async def ban_chat_member(self, chat_id: int | str, user_id: int, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "user_id": user_id, **params}
+        return await self.call("banChatMember", payload)
+
+    async def unban_chat_member(self, chat_id: int | str, user_id: int, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "user_id": user_id, **params}
+        return await self.call("unbanChatMember", payload)
+
+    async def restrict_chat_member(self, chat_id: int | str, user_id: int, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "user_id": user_id, **params}
+        return await self.call("restrictChatMember", payload)
+
+    async def get_chat(self, chat_id: int | str) -> Any:
+        return await self.call("getChat", {"chat_id": chat_id})
+
+    async def get_chat_member(self, chat_id: int | str, user_id: int) -> Any:
+        return await self.call("getChatMember", {"chat_id": chat_id, "user_id": user_id})
+
+    async def send_location(
+        self,
+        chat_id: int | str,
+        latitude: float,
+        longitude: float,
+        **params: Any,
+    ) -> Any:
+        payload = {"chat_id": chat_id, "latitude": latitude, "longitude": longitude, **params}
+        return await self.call("sendLocation", payload)
+
+    async def send_poll(
+        self,
+        chat_id: int | str,
+        question: str,
+        options: list[str],
+        **params: Any,
+    ) -> Any:
+        payload = {"chat_id": chat_id, "question": question, "options": options, **params}
+        return await self.call("sendPoll", payload)
+
+    async def stop_poll(self, chat_id: int | str, message_id: int, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "message_id": message_id, **params}
+        return await self.call("stopPoll", payload)
+
     @property
     def http(self) -> httpx.AsyncClient:
         if self._http is None:

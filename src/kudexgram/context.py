@@ -98,6 +98,26 @@ class Context:
             raise RuntimeError("Cannot reply with voice to an update without a chat")
         return await self.client.send_voice(self.chat_id, voice, **params)
 
+    async def reply_location(self, latitude: float, longitude: float, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot reply with location to an update without a chat")
+        return await self.client.send_location(self.chat_id, latitude, longitude, **params)
+
+    async def reply_poll(self, question: str, options: list[str], **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot reply with poll to an update without a chat")
+        return await self.client.send_poll(self.chat_id, question, options, **params)
+
+    async def ban_member(self, user_id: int, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot ban chat member without a chat")
+        return await self.client.ban_chat_member(self.chat_id, user_id, **params)
+
+    async def unban_member(self, user_id: int, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot unban chat member without a chat")
+        return await self.client.unban_chat_member(self.chat_id, user_id, **params)
+
 
 def get_current_context() -> Context:
     return _current_context.get()
