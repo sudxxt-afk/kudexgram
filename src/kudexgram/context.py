@@ -118,6 +118,21 @@ class Context:
             raise RuntimeError("Cannot unban chat member without a chat")
         return await self.client.unban_chat_member(self.chat_id, user_id, **params)
 
+    async def reply_sticker(self, sticker: str, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot reply with sticker to an update without a chat")
+        return await self.client.send_sticker(self.chat_id, sticker, **params)
+
+    async def reply_dice(self, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot reply with dice to an update without a chat")
+        return await self.client.send_dice(self.chat_id, **params)
+
+    async def reply_animation(self, animation: str, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot reply with animation to an update without a chat")
+        return await self.client.send_animation(self.chat_id, animation, **params)
+
 
 def get_current_context() -> Context:
     return _current_context.get()

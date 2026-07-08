@@ -104,6 +104,33 @@ async def test_client_api_coverage() -> None:
     await client.stop_poll(chat_id=42, message_id=10)
     assert client.calls[-1] == ("stopPoll", {"chat_id": 42, "message_id": 10})
 
+    await client.get_file(file_id="file-123")
+    assert client.calls[-1] == ("getFile", {"file_id": "file-123"})
+
+    await client.answer_inline_query(inline_query_id="iq-123", results=[])
+    assert client.calls[-1] == ("answerInlineQuery", {"inline_query_id": "iq-123", "results": []})
+
+    await client.set_my_commands(commands=[])
+    assert client.calls[-1] == ("setMyCommands", {"commands": []})
+
+    await client.delete_my_commands()
+    assert client.calls[-1] == ("deleteMyCommands", {})
+
+    await client.get_my_commands()
+    assert client.calls[-1] == ("getMyCommands", {})
+
+    await client.get_user_profile_photos(user_id=99)
+    assert client.calls[-1] == ("getUserProfilePhotos", {"user_id": 99})
+
+    await client.send_sticker(chat_id=42, sticker="sticker-id")
+    assert client.calls[-1] == ("sendSticker", {"chat_id": 42, "sticker": "sticker-id"})
+
+    await client.send_dice(chat_id=42)
+    assert client.calls[-1] == ("sendDice", {"chat_id": 42})
+
+    await client.send_animation(chat_id=42, animation="anim-id")
+    assert client.calls[-1] == ("sendAnimation", {"chat_id": 42, "animation": "anim-id"})
+
 
 @pytest.mark.asyncio
 async def test_context_helpers_coverage() -> None:
@@ -125,6 +152,9 @@ async def test_context_helpers_coverage() -> None:
         await ctx.reply_poll("Q?", ["A", "B"])
         await ctx.ban_member(99)
         await ctx.unban_member(99)
+        await ctx.reply_sticker("sticker-id")
+        await ctx.reply_dice()
+        await ctx.reply_animation("anim-id")
 
     update = Update(
         update_id=1,
@@ -151,3 +181,6 @@ async def test_context_helpers_coverage() -> None:
     assert ("sendPoll", {"chat_id": 42, "question": "Q?", "options": ["A", "B"]}) in calls
     assert ("banChatMember", {"chat_id": 42, "user_id": 99}) in calls
     assert ("unbanChatMember", {"chat_id": 42, "user_id": 99}) in calls
+    assert ("sendSticker", {"chat_id": 42, "sticker": "sticker-id"}) in calls
+    assert ("sendDice", {"chat_id": 42}) in calls
+    assert ("sendAnimation", {"chat_id": 42, "animation": "anim-id"}) in calls

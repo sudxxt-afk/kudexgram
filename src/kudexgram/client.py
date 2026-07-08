@@ -295,6 +295,39 @@ class TelegramClient:
         payload = {"chat_id": chat_id, "message_id": message_id, **params}
         return await self.call("stopPoll", payload)
 
+    async def get_file(self, file_id: str) -> Any:
+        return await self.call("getFile", {"file_id": file_id})
+
+    async def answer_inline_query(self, inline_query_id: str, results: list[Any], **params: Any) -> Any:
+        payload = {"inline_query_id": inline_query_id, "results": results, **params}
+        return await self.call("answerInlineQuery", payload)
+
+    async def set_my_commands(self, commands: list[Any], **params: Any) -> Any:
+        payload = {"commands": commands, **params}
+        return await self.call("setMyCommands", payload)
+
+    async def delete_my_commands(self, **params: Any) -> Any:
+        return await self.call("deleteMyCommands", params)
+
+    async def get_my_commands(self, **params: Any) -> Any:
+        return await self.call("getMyCommands", params)
+
+    async def get_user_profile_photos(self, user_id: int, **params: Any) -> Any:
+        payload = {"user_id": user_id, **params}
+        return await self.call("getUserProfilePhotos", payload)
+
+    async def send_sticker(self, chat_id: int | str, sticker: str, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "sticker": sticker, **params}
+        return await self.call("sendSticker", payload)
+
+    async def send_dice(self, chat_id: int | str, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, **params}
+        return await self.call("sendDice", payload)
+
+    async def send_animation(self, chat_id: int | str, animation: str, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "animation": animation, **params}
+        return await self.call("sendAnimation", payload)
+
     @property
     def http(self) -> httpx.AsyncClient:
         if self._http is None:
