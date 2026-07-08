@@ -15,7 +15,8 @@ class FakeTelegramClient(TelegramClient):
         self.updates = updates or []
 
     async def call(self, method: str, payload: dict[str, Any] | None = None) -> Any:
-        self.calls.append((method, payload or {}))
+        from kudexgram.client import _normalize_payload
+        self.calls.append((method, _normalize_payload(payload or {})))
         if method == "getUpdates":
             updates = self.updates
             self.updates = []

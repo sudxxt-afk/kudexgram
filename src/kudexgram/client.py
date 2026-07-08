@@ -145,7 +145,7 @@ class TelegramClient:
         return list(result or [])
 
     async def send_message(self, chat_id: int | str, text: str, **params: Any) -> Any:
-        payload = _normalize_payload({"chat_id": chat_id, "text": text, **params})
+        payload = {"chat_id": chat_id, "text": text, **params}
         return await self.call("sendMessage", payload)
 
     async def answer_callback_query(
@@ -158,7 +158,7 @@ class TelegramClient:
         payload: dict[str, Any] = {"callback_query_id": callback_query_id, **params}
         if text is not None:
             payload["text"] = text
-        return await self.call("answerCallbackQuery", _normalize_payload(payload))
+        return await self.call("answerCallbackQuery", payload)
 
     async def edit_message_text(
         self,
@@ -330,9 +330,21 @@ class TelegramClient:
 
     async def download_file(self, file_path: str) -> bytes:
         url = f"{self.base_url}/file/bot{self.token}/{file_path}"
-        response = await self.http.get(url)
-        response.raise_for_status()
-        return response.content
+        for attempt in range(self.retry_attempts + 1):
+            try:
+                response = await self.http.get(url)
+                if response.status_code >= 400:
+                    raise TelegramHTTPError("downloadFile", response.status_code, response.text)
+                return response.content
+            except TelegramHTTPError as error:
+                if attempt >= self.retry_attempts or not _is_retryable_status(error.status_code):
+                    raise
+                await self._sleep(self._retry_delay(attempt))
+            except (httpx.TimeoutException, httpx.NetworkError) as error:
+                if attempt >= self.retry_attempts:
+                    raise TelegramNetworkError("downloadFile", error) from error
+                await self._sleep(self._retry_delay(attempt))
+        raise RuntimeError("unreachable download retry state")
 
     @property
     def http(self) -> httpx.AsyncClient:
