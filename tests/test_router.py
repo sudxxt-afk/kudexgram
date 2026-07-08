@@ -172,3 +172,23 @@ async def test_callback_returned_text_requires_callback_message_chat() -> None:
 
     with pytest.raises(RuntimeError, match="Cannot reply to an update without a chat"):
         await bot.dispatch(make_callback_update("orphan", with_message=False))
+
+
+def test_handler_signature_rejects_unknown_parameter() -> None:
+    router = Router()
+
+    with pytest.raises(TypeError, match="Unsupported handler parameter 'db'"):
+
+        @router.command("start")
+        async def start(db) -> str:
+            return "never registered"
+
+
+def test_handler_signature_rejects_unknown_annotated_parameter() -> None:
+    router = Router()
+
+    with pytest.raises(TypeError, match="Unsupported handler parameter 'db'"):
+
+        @router.command("start")
+        async def start(db: object) -> str:
+            return "never registered"

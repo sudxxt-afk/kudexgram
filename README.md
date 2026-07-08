@@ -41,6 +41,15 @@ async def echo(message: str) -> str:
 bot.run_polling()
 ```
 
+Middleware stays explicit when a bot grows:
+
+```python
+@bot.use
+async def log_chat(ctx: Context, next) -> bool:
+    print(ctx.chat_id)
+    return await next()
+```
+
 ## CLI
 
 Kudexgram uses the short command name `kdx`.
@@ -79,6 +88,8 @@ uv run kdx --help
 - `Bot` decorators for small bots, plus `Router` for modular projects.
 - Router decorators for commands and text messages with compiled handler resolution.
 - Context API with explicit `ctx: Context` injection and `ctx.reply(...)` sugar.
+- Middleware pipeline with `bot.use(...)`.
+- Clear handler signature errors for unsupported parameters.
 - Runtime boundary for polling, webhook, replay, and tests.
 - Minimal production-shaped state engine for conversations.
 - Testing DSL for conversation-style tests with `bot.scenario()`.

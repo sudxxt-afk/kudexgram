@@ -13,6 +13,7 @@ short CLI command `kdx`.
 - `Application`: owns routers, plugins, dispatch, and lifecycle coordination.
 - `Router`: decorators for `command`, `text`, and later callbacks, with compiled handler resolution.
 - `Context` / `ctx`: explicit handler context plus convenience proxy, with `reply(...)` and access to update/message/chat/user.
+- `Middleware`: `bot.use(...)` / `app.use(...)` pipeline around dispatch.
 - `UpdateSource` / `PollingRunner`: runtime boundary for polling, webhook, queue, replay, and tests.
 - `TelegramClient`: low-level async API client with `call(...)`, `send_message(...)`, `get_updates(...)`.
 - `MemoryStateStore`: development state adapter behind a production-shaped `StateStore` contract.
@@ -25,8 +26,10 @@ short CLI command `kdx`.
 2. Core models: minimal `Update`, `Message`, `Chat`, `User` using `msgspec`.
 3. Client runtime: persistent `TelegramClient`, polling source, runner, error handling, graceful shutdown.
 4. Routing: command/text matching, compiled handler dispatch, context proxy, returned text rendering.
+   - Unsupported handler parameters fail at registration with clear errors.
 5. State: versioned in-memory state store and conversation-oriented example.
 6. Testing: fake Telegram client, `bot.scenario()`, update feed helpers, outgoing message assertions.
+   - Middleware order, short-circuiting, and handler signature validation are covered.
 7. CLI: `kdx new <name>`, `kdx dev`, and `kdx --help`.
    - `kdx new` generates `pyproject.toml`, `README.md`, `.env.example`, `.gitignore`,
      `bot.py`, and `tests/test_bot.py`.

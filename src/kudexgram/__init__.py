@@ -3,6 +3,7 @@ from kudexgram.bot import Bot
 from kudexgram.client import TelegramAPIError, TelegramClient
 from kudexgram.context import Context, ctx, get_current_context
 from kudexgram.keyboards import InlineKeyboard
+from kudexgram.middleware import Middleware, MiddlewareObject, NextHandler
 from kudexgram.router import Router
 from kudexgram.runtime import PollingRunner, PollingUpdateSource, UpdateSource
 from kudexgram.state import MemoryStateStore, StateRecord, StateStore
@@ -20,6 +21,9 @@ __all__ = [
     "InlineKeyboard",
     "MemoryStateStore",
     "Message",
+    "Middleware",
+    "MiddlewareObject",
+    "NextHandler",
     "Plugin",
     "PollingRunner",
     "PollingUpdateSource",

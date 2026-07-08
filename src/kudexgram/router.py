@@ -6,8 +6,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from kudexgram.client import TelegramClient
-from kudexgram.context import Context, _current_context
+from kudexgram.context import Context
 from kudexgram.types import CallbackQuery, Message, Update
 
 Handler = Callable[..., Awaitable[Any]]
@@ -66,18 +65,13 @@ class Router:
 
         return decorator
 
-    async def dispatch(self, update: Update, client: TelegramClient) -> bool:
+    async def dispatch(self, context: Context) -> bool:
         for route in self.routes:
-            if not route.filter(update):
+            if not route.filter(context.update):
                 continue
 
-            context = Context(update=update, client=client)
-            token = _current_context.set(context)
-            try:
-                result = await route.resolver.call(context)
-                await _render_result(context, result)
-            finally:
-                _current_context.reset(token)
+            result = await route.resolver.call(context)
+            await _render_result(context, result)
             return True
 
         return False
@@ -117,6 +111,7 @@ async def _render_result(context: Context, result: Any) -> None:
 
 def _resolve_argument(parameter: inspect.Parameter) -> ArgumentSource:
     annotation = parameter.annotation
+    name = parameter.name
     if annotation is Context:
         return ArgumentSource.CONTEXT
     if annotation is Update:
@@ -125,21 +120,28 @@ def _resolve_argument(parameter: inspect.Parameter) -> ArgumentSource:
         return ArgumentSource.MESSAGE
     if annotation is CallbackQuery:
         return ArgumentSource.CALLBACK_QUERY
-    if annotation is str and parameter.name == "message":
+    if annotation is str and name == "message":
         return ArgumentSource.MESSAGE_TEXT
-    if annotation is str and parameter.name == "callback_data":
+    if annotation is str and name == "callback_data":
         return ArgumentSource.CALLBACK_DATA
-    if parameter.name == "ctx":
+    if name in {"ctx", "context"}:
         return ArgumentSource.CONTEXT
-    if parameter.name == "update":
+    if name == "update":
         return ArgumentSource.UPDATE
-    if parameter.name == "message":
+    if name == "message":
         return ArgumentSource.MESSAGE_TEXT
-    if parameter.name == "callback_query":
+    if name == "callback_query":
         return ArgumentSource.CALLBACK_QUERY
-    if parameter.name == "callback_data":
+    if name == "callback_data":
         return ArgumentSource.CALLBACK_DATA
-    return ArgumentSource.CONTEXT
+    annotation_hint = ""
+    if annotation is not inspect.Signature.empty:
+        annotation_hint = f" with annotation {annotation!r}"
+    raise TypeError(
+        f"Unsupported handler parameter {name!r}{annotation_hint}. "
+        "Use ctx: Context, update: Update, message: str, "
+        "callback_query: CallbackQuery, or callback_data: str."
+    )
 
 
 def _read_argument(source: ArgumentSource, context: Context) -> Any:

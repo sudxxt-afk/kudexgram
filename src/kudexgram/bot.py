@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from kudexgram.app import Application, Plugin
 from kudexgram.client import TelegramClient
+from kudexgram.middleware import Middleware, MiddlewareObject
 from kudexgram.router import Handler, Router
 from kudexgram.runtime import PollingRunner, PollingUpdateSource
 from kudexgram.types import Update
@@ -46,6 +47,9 @@ class Bot:
 
     def install(self, plugin: Plugin) -> None:
         self.app.install(plugin)
+
+    def use(self, middleware: Middleware | MiddlewareObject) -> None:
+        self.app.use(middleware)
 
     def run_polling(self) -> None:
         asyncio.run(self.polling())
