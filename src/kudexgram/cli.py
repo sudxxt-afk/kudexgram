@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 import typer
@@ -219,10 +223,99 @@ def _normalize_package_name(name: str) -> str:
     return normalized.strip("_") or "bot"
 
 
+class FileWatcher:
+    def __init__(self, directory: Path) -> None:
+        self.directory = directory
+        self.last_mtimes = self._scan()
+
+    def _scan(self) -> dict[Path, float]:
+        mtimes = {}
+        exclude_dirs = {".git", ".venv", "__pycache__", ".pytest_cache", ".ruff_cache"}
+        try:
+            for root, dirs, files in os.walk(self.directory):
+                dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith(".")]
+                for file in files:
+                    if file.endswith(".py"):
+                        path = Path(root) / file
+                        try:
+                            mtimes[path] = path.stat().st_mtime
+                        except FileNotFoundError:
+                            pass
+        except Exception:
+            pass
+        return mtimes
+
+    def check_for_changes(self) -> bool:
+        current_mtimes = self._scan()
+        if current_mtimes != self.last_mtimes:
+            self.last_mtimes = current_mtimes
+            return True
+        return False
+
+
 @app.command()
-def dev() -> None:
-    """Start the local development runner."""
-    typer.echo("kdx dev is planned for the MVP. Run your bot module directly for now.")
+def dev(
+    file: Path = typer.Argument(
+        Path("bot.py"),
+        help="Path to the bot file to run.",
+    ),
+    once: bool = typer.Option(
+        False,
+        "--once",
+        hidden=True,
+        help="Run the bot once and exit (for testing).",
+    ),
+) -> None:
+    """Start the local development runner with hot reload."""
+    if not file.exists():
+        typer.echo(f"Error: file {file} does not exist.", err=True)
+        raise typer.Exit(code=1)
+
+    typer.echo(f"Starting local development runner for {file}...")
+    watcher = FileWatcher(Path.cwd())
+
+    process = None
+
+    def start_bot() -> subprocess.Popen:
+        typer.echo(f"Running: {sys.executable} {file}")
+        return subprocess.Popen([sys.executable, str(file)])
+
+    try:
+        process = start_bot()
+        if once:
+            time.sleep(0.5)
+            return
+
+        while True:
+            if process.poll() is not None:
+                typer.echo("Bot process exited. Waiting for file changes to restart...")
+                while True:
+                    time.sleep(0.5)
+                    if watcher.check_for_changes():
+                        process = start_bot()
+                        break
+            else:
+                time.sleep(0.5)
+                if watcher.check_for_changes():
+                    typer.echo("Changes detected. Restarting bot...")
+                    process.terminate()
+                    try:
+                        process.wait(timeout=3)
+                    except subprocess.TimeoutExpired:
+                        typer.echo("Forcefully terminating bot process...")
+                        process.kill()
+                        process.wait()
+                    process = start_bot()
+    except KeyboardInterrupt:
+        typer.echo("Stopping development runner...")
+    finally:
+        if process and process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
 
 
 if __name__ == "__main__":

@@ -50,3 +50,25 @@ def test_kdx_new_force_writes_generated_files(tmp_path) -> None:
     assert result.exit_code == 0
     assert (project / "bot.py").exists()
     assert (project / "keep.txt").read_text(encoding="utf-8") == "keep me"
+
+
+def test_kdx_dev_runs_successfully(tmp_path) -> None:
+    runner = CliRunner()
+    bot_file = tmp_path / "bot.py"
+    bot_file.write_text("print('hello bot')", encoding="utf-8")
+
+    result = runner.invoke(app, ["dev", str(bot_file), "--once"])
+
+    assert result.exit_code == 0
+    assert "Starting local development runner for" in result.output
+    assert "Running:" in result.output
+
+
+def test_kdx_dev_errors_when_file_not_found(tmp_path) -> None:
+    runner = CliRunner()
+    bot_file = tmp_path / "does_not_exist.py"
+
+    result = runner.invoke(app, ["dev", str(bot_file), "--once"])
+
+    assert result.exit_code != 0
+    assert "does not exist" in result.output
