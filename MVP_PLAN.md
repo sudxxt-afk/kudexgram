@@ -15,7 +15,8 @@ short CLI command `kdx`.
 - `Context` / `ctx`: explicit handler context plus convenience proxy, with `reply(...)` and access to update/message/chat/user.
 - `Middleware`: `bot.use(...)` / `app.use(...)` pipeline around dispatch.
 - `UpdateSource` / `PollingRunner`: runtime boundary for polling, webhook, queue, replay, and tests.
-- `TelegramClient`: low-level async API client with `call(...)`, `send_message(...)`, `get_updates(...)`.
+- `TelegramClient`: low-level async API client with `call(...)`, `send_message(...)`,
+  `get_updates(...)`, retries, rate-limit handling, and readable errors.
 - `MemoryStateStore`: development state adapter behind a production-shaped `StateStore` contract.
 - `BotScenario`: testing DSL for feeding message updates and asserting replies/API calls.
 - `kdx`: console command for project scaffolding and local dev.
@@ -24,7 +25,8 @@ short CLI command `kdx`.
 
 1. Repository bootstrap: packaging, README, license, lint/test config.
 2. Core models: minimal `Update`, `Message`, `Chat`, `User` using `msgspec`.
-3. Client runtime: persistent `TelegramClient`, polling source, runner, error handling, graceful shutdown.
+3. Client runtime: persistent `TelegramClient`, retry policy, polling source, runner,
+   error handling, graceful shutdown.
 4. Routing: command/text matching, compiled handler dispatch, context proxy, returned text rendering.
    - Unsupported handler parameters fail at registration with clear errors.
 5. State: versioned in-memory state store and conversation-oriented example.
@@ -40,6 +42,7 @@ short CLI command `kdx`.
 
 - Router matching for command, text, and unmatched updates.
 - Client payload tests with mocked HTTP transport.
+- Client retry tests for Telegram `429`, HTTP `5xx`, non-retryable `4xx`, and network errors.
 - Polling dispatch tests with fake updates.
 - State lifecycle tests: set, get, clear.
 - CLI smoke tests for `kdx --help` and project scaffolding in a temp directory.

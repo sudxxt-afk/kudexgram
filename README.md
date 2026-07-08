@@ -85,6 +85,7 @@ uv run kdx --help
 
 - Thin `Bot` facade over an application/runtime architecture.
 - Async Telegram Bot API client with a typed core and codegen-ready boundaries.
+- Telegram API retries for rate limits, temporary HTTP failures, and network timeouts.
 - `Bot` decorators for small bots, plus `Router` for modular projects.
 - Router decorators for commands and text messages with compiled handler resolution.
 - Context API with explicit `ctx: Context` injection and `ctx.reply(...)` sugar.
@@ -107,6 +108,19 @@ await scenario.send_message("/start")
 scenario.assert_handled()
 scenario.assert_last_reply("Hey Ada. Kudexgram is alive.")
 scenario.assert_api_called("sendMessage")
+```
+
+## Client Reliability
+
+`TelegramClient` has a small production-minded retry policy:
+
+- Telegram `429` errors use `parameters.retry_after`.
+- Temporary HTTP `5xx` responses retry with exponential backoff.
+- Network timeouts and network errors retry before raising `TelegramNetworkError`.
+- Non-retryable Telegram errors raise clear `TelegramAPIError` subclasses.
+
+```python
+client = TelegramClient("token", retry_attempts=3, retry_backoff=0.5)
 ```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the current v0.1 architecture direction.

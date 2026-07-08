@@ -1,6 +1,12 @@
 from kudexgram.app import Application, Plugin
 from kudexgram.bot import Bot
-from kudexgram.client import TelegramAPIError, TelegramClient
+from kudexgram.client import (
+    TelegramAPIError,
+    TelegramClient,
+    TelegramHTTPError,
+    TelegramNetworkError,
+    TelegramRateLimitError,
+)
 from kudexgram.context import Context, ctx, get_current_context
 from kudexgram.keyboards import InlineKeyboard
 from kudexgram.middleware import Middleware, MiddlewareObject, NextHandler
@@ -32,6 +38,9 @@ __all__ = [
     "StateStore",
     "TelegramAPIError",
     "TelegramClient",
+    "TelegramHTTPError",
+    "TelegramNetworkError",
+    "TelegramRateLimitError",
     "Update",
     "UpdateSource",
     "User",
