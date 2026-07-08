@@ -209,6 +209,37 @@ class TelegramClient:
         payload = {"chat_id": chat_id, "document": document, **params}
         return await self.call("sendDocument", payload)
 
+    async def get_me(self) -> Any:
+        return await self.call("getMe")
+
+    async def send_chat_action(self, chat_id: int | str, action: str, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "action": action, **params}
+        return await self.call("sendChatAction", payload)
+
+    async def send_audio(self, chat_id: int | str, audio: str, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "audio": audio, **params}
+        return await self.call("sendAudio", payload)
+
+    async def send_video(self, chat_id: int | str, video: str, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "video": video, **params}
+        return await self.call("sendVideo", payload)
+
+    async def send_voice(self, chat_id: int | str, voice: str, **params: Any) -> Any:
+        payload = {"chat_id": chat_id, "voice": voice, **params}
+        return await self.call("sendVoice", payload)
+
+    async def answer_pre_checkout_query(
+        self,
+        pre_checkout_query_id: str,
+        ok: bool,
+        *,
+        error_message: str | None = None,
+    ) -> Any:
+        payload: dict[str, Any] = {"pre_checkout_query_id": pre_checkout_query_id, "ok": ok}
+        if error_message is not None:
+            payload["error_message"] = error_message
+        return await self.call("answerPreCheckoutQuery", payload)
+
     @property
     def http(self) -> httpx.AsyncClient:
         if self._http is None:

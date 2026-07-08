@@ -78,6 +78,26 @@ class Context:
             raise RuntimeError("Cannot reply with photo to an update without a chat")
         return await self.client.send_photo(self.chat_id, photo, **params)
 
+    async def send_action(self, action: str, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot send chat action to an update without a chat")
+        return await self.client.send_chat_action(self.chat_id, action, **params)
+
+    async def reply_audio(self, audio: str, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot reply with audio to an update without a chat")
+        return await self.client.send_audio(self.chat_id, audio, **params)
+
+    async def reply_video(self, video: str, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot reply with video to an update without a chat")
+        return await self.client.send_video(self.chat_id, video, **params)
+
+    async def reply_voice(self, voice: str, **params: Any) -> Any:
+        if self.chat_id is None:
+            raise RuntimeError("Cannot reply with voice to an update without a chat")
+        return await self.client.send_voice(self.chat_id, voice, **params)
+
 
 def get_current_context() -> Context:
     return _current_context.get()
