@@ -133,6 +133,9 @@ class Context:
             raise RuntimeError("Cannot reply with animation to an update without a chat")
         return await self.client.send_animation(self.chat_id, animation, **params)
 
+    async def download_file(self, file_path: str) -> bytes:
+        return await self.client.download_file(file_path)
+
 
 def get_current_context() -> Context:
     return _current_context.get()

@@ -131,6 +131,10 @@ async def test_client_api_coverage() -> None:
     await client.send_animation(chat_id=42, animation="anim-id")
     assert client.calls[-1] == ("sendAnimation", {"chat_id": 42, "animation": "anim-id"})
 
+    content = await client.download_file("path/to/file")
+    assert content == b"file_content"
+    assert client.calls[-1] == ("downloadFile", {"file_path": "path/to/file"})
+
 
 @pytest.mark.asyncio
 async def test_context_helpers_coverage() -> None:
@@ -155,6 +159,8 @@ async def test_context_helpers_coverage() -> None:
         await ctx.reply_sticker("sticker-id")
         await ctx.reply_dice()
         await ctx.reply_animation("anim-id")
+        file_data = await ctx.download_file("path/to/file")
+        assert file_data == b"file_content"
 
     update = Update(
         update_id=1,
@@ -184,3 +190,4 @@ async def test_context_helpers_coverage() -> None:
     assert ("sendSticker", {"chat_id": 42, "sticker": "sticker-id"}) in calls
     assert ("sendDice", {"chat_id": 42}) in calls
     assert ("sendAnimation", {"chat_id": 42, "animation": "anim-id"}) in calls
+    assert ("downloadFile", {"file_path": "path/to/file"}) in calls

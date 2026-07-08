@@ -22,6 +22,10 @@ class FakeTelegramClient(TelegramClient):
             return updates
         return {"ok": True}
 
+    async def download_file(self, file_path: str) -> bytes:
+        self.calls.append(("downloadFile", {"file_path": file_path}))
+        return b"file_content"
+
     def sent_messages(self) -> list[dict[str, Any]]:
         return [payload for method, payload in self.calls if method == "sendMessage"]
 

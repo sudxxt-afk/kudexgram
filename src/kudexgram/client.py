@@ -328,6 +328,12 @@ class TelegramClient:
         payload = {"chat_id": chat_id, "animation": animation, **params}
         return await self.call("sendAnimation", payload)
 
+    async def download_file(self, file_path: str) -> bytes:
+        url = f"{self.base_url}/file/bot{self.token}/{file_path}"
+        response = await self.http.get(url)
+        response.raise_for_status()
+        return response.content
+
     @property
     def http(self) -> httpx.AsyncClient:
         if self._http is None:
